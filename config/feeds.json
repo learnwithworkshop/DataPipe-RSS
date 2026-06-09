@@ -1,1 +1,30 @@
-
+[
+  {
+    "id": "bbc_tech",
+    "name": "BBC Technology",
+    "url": "http://feeds.bbci.co.uk/news/technology/rss.xml",
+    "category": "Technology",
+    "active": true
+  },
+  {
+    "id": "reuters_tech",
+    "name": "Reuters Technology",
+    "url": "https://feeds.reuters.com/reuters/technologyNews",
+    "category": "Technology",
+    "active": true
+  },
+  {
+    "id": "hn_frontpage",
+    "name": "Hacker News Front Page",
+    "url": "https://hnrss.org/frontpage",
+    "category": "Tech Community",
+    "active": true
+  },
+  {
+    "id": "nasa_breaking",
+    "name": "NASA Breaking News",
+    "url": "https://www.nasa.gov/rss/dyn/breaking_news.rss",
+    "category": "Science",
+    "active": false
+  }
+]

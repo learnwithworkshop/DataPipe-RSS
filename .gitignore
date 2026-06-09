@@ -1,1 +1,52 @@
+# ==========================================
+# DataPipe-RSS — Git Exclusion Rules
+# ==========================================
 
+# --- Secrets (CRITICAL: Never commit these) ---
+.env
+*.key
+*.pem
+secrets/
+
+# --- Python Artifacts ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# --- Virtual Environment ---
+venv/
+env/
+.venv/
+.env/
+
+# --- Database (local state, not source code) ---
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# --- Logs (generated at runtime) ---
+logs/*.log
+logs/*.txt
+# Keep the audit markdown but not raw logs
+!logs/project_audit.md
+
+# --- IDE / Editor ---
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# --- Test Coverage ---
+.coverage
+htmlcov/
+.pytest_cache/
