@@ -292,18 +292,24 @@ class FeedCollector:
     def _strip_html(html_text: str) -> str:
         """
         Remove HTML tags from a string using BeautifulSoup.
-        Falls back to the raw string if parsing fails.
+        Falls back to standard html.parser if lxml is missing, or regex on total failure.
         """
         if not html_text:
             return ""
         try:
-            soup = BeautifulSoup(html_text, "lxml")
+            # Fallback guard for environments missing lxml
+            parser = "lxml"
+            try:
+                import lxml
+            except ImportError:
+                parser = "html.parser"
+                
+            soup = BeautifulSoup(html_text, parser)
             return " ".join(soup.get_text(separator=" ").split())
         except Exception:
             # Fallback: crude tag stripping without bs4
             import re
             return re.sub(r"<[^>]+>", "", html_text)
-
     @staticmethod
     def _parse_date(entry: feedparser.FeedParserDict) -> str:
         """

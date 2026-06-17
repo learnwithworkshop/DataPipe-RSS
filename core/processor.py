@@ -223,6 +223,13 @@ class AIProcessor(BaseProcessor):
             log.debug("AIProcessor: feature flag is OFF — skipping.")
             return articles
 
+        # Safe Guard: Validate openai package installation before processing loop
+        try:
+            self._get_client()
+        except ImportError as exc:
+            log.error("AIProcessor skipped: %s. Please install dependencies.", exc)
+            return articles
+
         enriched: List[ArticleRecord] = []
         for article in articles:
             try:
@@ -237,7 +244,6 @@ class AIProcessor(BaseProcessor):
                 enriched.append(article)
         log.info("AIProcessor enriched %d/%d articles.", len(enriched), len(articles))
         return enriched
-
     def _enrich(self, article: ArticleRecord) -> ArticleRecord:
         """
         Call the OpenAI API to summarise and tag a single article.

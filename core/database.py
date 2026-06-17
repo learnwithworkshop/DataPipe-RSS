@@ -106,7 +106,7 @@ class DatabaseManager:
         """
         Args:
             db_path: Full path to the .db file. Parent directory is
-                     created automatically if it doesn't exist.
+            created automatically if it doesn't exist.
         """
         self._db_path = db_path
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -194,22 +194,17 @@ class DuplicateChecker:
     def is_new(self, article: ArticleRecord) -> bool:
         """
         Check whether an article has NOT been sent before.
-
-        Args:
-            article: The ArticleRecord to test.
-
-        Returns:
-            True  → article is new, safe to send.
-            False → article already exists in the database (duplicate).
         """
         conn = self._db.get_connection()
         try:
             with self._lock:
-                cursor = conn.execute(
+                # Context manager added to auto-close cursor and prevent DB locks
+                with conn.execute(
                     "SELECT 1 FROM articles WHERE url_hash = ? LIMIT 1;",
                     (article.url_hash,),
-                )
-                exists = cursor.fetchone() is not None
+                ) as cursor:
+                    exists = cursor.fetchone() is not None
+                
                 log.debug(
                     "Duplicate check [%s]: %s",
                     "DUPLICATE" if exists else "NEW",

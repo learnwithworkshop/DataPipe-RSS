@@ -81,48 +81,48 @@ def run_pipeline() -> None:
     processed_articles: List[ArticleRecord] = pipeline.run(raw_articles)
 
     # ── Step 3 & 4: Deduplicate → Dispatch → Mark ─────────────────────────
+    # ── Step 3 & 4: Deduplicate → Dispatch → Mark ─────────────────────────
     checker = DuplicateChecker()
-    connectors: List[BaseConnector] = _build_connectors()
+    try:
+        connectors: List[BaseConnector] = _build_connectors()
+        active_connectors = [c for c in connectors if c.is_configured()]
+        if not active_connectors:
+            log.warning(
+                "No connectors are configured and enabled. "
+                "Set ENABLE_GOOGLE_SHEETS=true or ENABLE_EXCEL_ONLINE=true in .env."
+            )
 
-    active_connectors = [c for c in connectors if c.is_configured()]
-    if not active_connectors:
-        log.warning(
-            "No connectors are configured and enabled. "
-            "Set ENABLE_GOOGLE_SHEETS=true or ENABLE_EXCEL_ONLINE=true in .env."
-        )
+        new_count = 0
+        sent_count = 0
 
-    new_count = 0
-    sent_count = 0
+        for article in processed_articles:
+            # MANDATORY: check for duplicates before touching any connector
+            if not checker.is_new(article):
+                log.debug("Duplicate skipped: %s", article.title[:60])
+                continue
 
-    for article in processed_articles:
-        # MANDATORY: check for duplicates before touching any connector
-        if not checker.is_new(article):
-            log.debug("Duplicate skipped: %s", article.title[:60])
-            continue
+            new_count += 1
+            dispatch_success = False
 
-        new_count += 1
-        dispatch_success = False
+            for connector in active_connectors:
+                try:
+                    success = connector.send(article)
+                    if success:
+                        dispatch_success = True
+                except Exception as exc:
+                    log.error(
+                        "Unhandled error in connector %s for '%s': %s",
+                        type(connector).__name__,
+                        article.title[:50],
+                        exc,
+                    )
 
-        for connector in active_connectors:
-            try:
-                success = connector.send(article)
-                if success:
-                    dispatch_success = True
-            except Exception as exc:
-                # Catch-all: one connector failure must not kill the loop
-                log.error(
-                    "Unhandled error in connector %s for '%s': %s",
-                    type(connector).__name__,
-                    article.title[:50],
-                    exc,
-                )
-
-        # Mark as sent ONLY after at least one connector succeeded
-        if dispatch_success or not active_connectors:
-            checker.mark_as_sent(article)
-            sent_count += 1
-
-    checker.close()
+            if dispatch_success or not active_connectors:
+                checker.mark_as_sent(article)
+                sent_count += 1
+    finally:
+        # Guaranteed closure even if unhandled exceptions disrupt the loop
+        checker.close()
 
     # ── Summary ────────────────────────────────────────────────────────────
     log.info(
